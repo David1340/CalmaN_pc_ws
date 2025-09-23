@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'pc_navigation = pc_navigation.pc_navigation:main',
+            'pc_stop = pc_navigation.pc_stop:main',
         ],
     },
 )
