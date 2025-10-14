@@ -8,7 +8,7 @@ class JoystickTeleop(Node):
         super().__init__('joystick_teleop')
 
         # Publicador para enviar velocidades
-        self.velPub = self.create_publisher(Twist, '/robot/cmd_vel', 2)
+        self.velPub = self.create_publisher(Twist, '/robot/cmd_vel', 10)
 
         # Inicializa pygame e joystick
         pygame.init()
@@ -23,7 +23,7 @@ class JoystickTeleop(Node):
         self.get_logger().info(f'Usando joystick: {self.joystick.get_name()}')
 
         # Cria um timer para ler o joystick a ~300 Hz (3.33 ms)
-        self.timer = self.create_timer(3.333e-3, self.timer_callback)
+        self.timer = self.create_timer(3.333e-2, self.timer_callback)
 
     def timer_callback(self):
         # Atualiza eventos do pygame
