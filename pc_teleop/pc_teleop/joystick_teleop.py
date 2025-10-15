@@ -5,10 +5,10 @@ import pygame
 
 class JoystickTeleop(Node):
     def __init__(self):
-        super().__init__('joystick_teleop')
+        super().__init__('joystick_teleop', namespace='/robot')
 
         # Publicador para enviar velocidades
-        self.velPub = self.create_publisher(Twist, '/robot/cmd_vel', 10)
+        self.velPub = self.create_publisher(Twist, 'cmd_vel', 10)
 
         # Inicializa pygame e joystick
         pygame.init()

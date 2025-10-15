@@ -6,8 +6,8 @@ import time
 
 class KeyboardTeleop(Node):
     def __init__(self):
-        super().__init__('keyboard_teleop')
-        self.velPub = self.create_publisher(Twist, '/robot/cmd_vel', 10)
+        super().__init__('keyboard_teleop', namespace='/robot')
+        self.velPub = self.create_publisher(Twist, 'cmd_vel', 10)
 
 
         Vmax = 25.2*(0.03)
