@@ -7,7 +7,7 @@ import time
 class KeyboardTeleop(Node):
     def __init__(self):
         super().__init__('keyboard_teleop')
-        self.velPub = self.create_publisher(Twist, '/robot/cmd_vel', 2)
+        self.velPub = self.create_publisher(Twist, '/robot/cmd_vel', 10)
 
 
         Vmax = 25.2*(0.03)
@@ -21,7 +21,6 @@ class KeyboardTeleop(Node):
         self.get_logger().info(
             "\nTeleop iniciado! Use as teclas:\n"
             "  W/S -> Frente/Tras\n"
-@@ -25,60 +24,35 @@ def __init__(self):
             "  Q -> Sair"
         )
 
@@ -85,3 +84,8 @@ class KeyboardTeleop(Node):
             rclpy.shutdown()
 
 def main(args=None):
+    rclpy.init(args=args)
+    node = KeyboardTeleop()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()    
