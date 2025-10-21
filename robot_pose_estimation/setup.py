@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'robot_pose_tracker'
+package_name = 'robot_pose_estimation'
 
 setup(
     name=package_name,
@@ -11,9 +11,6 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    package_data={
-        package_name: ['test_data/*'],  # <- Aqui entram os XMLs/imagens
-    },
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='rodri',
@@ -23,8 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'pose_tracker = robot_pose_tracker.pose_tracker_node:main',
-            'odom_cam = robot_pose_tracker.odom_cam_node:main',
+            'pose_estimation = robot_pose_estimation.pose_estimation_node:main',
+            'odom_cam = robot_pose_estimation.odom_cam_node:main',
         ],
     },
 )

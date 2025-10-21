@@ -6,16 +6,17 @@ from tf2_ros import TransformBroadcaster
 import numpy as np
 import xml.etree.ElementTree as ET
 import os
+import time
 
-class RobotPoseTracker(Node):
+class RobotPoseEstimation(Node):
     def __init__(self):
-        super().__init__('robot_pose_tracker')
+        super().__init__('robot_pose_estimation')
         pkg_dir = os.path.dirname(os.path.realpath(__file__))
         self.thresholds_xml_path = os.path.join(pkg_dir, "test_data", "limiares.xml")
         # -- Parâmetros
-        self.declare_parameter('camera_index', 2)
+        self.declare_parameter('camera_index', 1)
         self.declare_parameter('thresholds_xml', self.thresholds_xml_path)
-        self.declare_parameter('escala', 2.5*100.0)  # pixel/m
+        self.declare_parameter('escala', 1.30*100.0)  # pixel/m
 
         self.pose_pub = self.create_publisher(PoseStamped, '/pose_topic', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
@@ -31,7 +32,32 @@ class RobotPoseTracker(Node):
             self.get_logger().error(f"Nao foi possivel abrir camera {self.camera_index}")
             exit(1)
 
-        #self.frame_teste = cv2.imread(self.image_path)  
+        
+        # Define resolução
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
+        # Define foco manual (nem todas as câmeras suportam)
+        self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)   # 0 = manual, 1 = automático
+        self.cap.set(cv2.CAP_PROP_FOCUS, 0)       # valor em uma faixa dependente da câmera
+
+        # Define exposição manual
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)  # 1 = manual em algumas câmeras; 3 = automático (varia conforme driver)
+        self.cap.set(cv2.CAP_PROP_EXPOSURE, -8)
+
+        # Define contraste, saturação e brilho
+        self.cap.set(cv2.CAP_PROP_CONTRAST, 10)
+        self.cap.set(cv2.CAP_PROP_SATURATION, 200)
+        brilho = 60
+        print("Definindo brilho para:", brilho)
+        self.cap.set(cv2.CAP_PROP_BRIGHTNESS, brilho)
+        time.sleep(0.1)
+        self.cap.set(cv2.CAP_PROP_BRIGHTNESS, 100)
+        time.sleep(0.1)
+        self.cap.set(cv2.CAP_PROP_BRIGHTNESS, brilho)
+        #self.frame_teste = cv2.imread(self.image_path)
+        print("Brilho aplicado:", self.cap.get(cv2.CAP_PROP_BRIGHTNESS))
+
 
         # Timer para processamento
         self.timer = self.create_timer(0.05, self.timer_callback)  # 20 Hz
@@ -103,7 +129,7 @@ class RobotPoseTracker(Node):
         pose_msg.header.frame_id = "world"  
         pose_msg.pose.position.x = float(xr)
         pose_msg.pose.position.y = float(yr)
-        pose_msg.pose.position.z = 0.0
+        pose_msg.pose.position.z = yaw
         pose_msg.pose.orientation.x = 0.0
         pose_msg.pose.orientation.y = 0.0
         pose_msg.pose.orientation.z = np.sin(yaw/2)
@@ -144,12 +170,12 @@ class RobotPoseTracker(Node):
         scale = 0.6  # 60% do tamanho original, ajuste conforme desejar
         frame_small = cv2.resize(frame, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
 
-        cv2.imshow("Robot Tracking", frame_small)
+        cv2.imshow("Robot Pose Estimation", frame_small)
         cv2.waitKey(1)
 
 def main(args=None):
     rclpy.init(args=args)
-    node = RobotPoseTracker()
+    node = RobotPoseEstimation()
     rclpy.spin(node)
     node.destroy_node()
     cv2.destroyAllWindows()

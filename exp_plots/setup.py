@@ -29,6 +29,7 @@ setup(
             'pose = exp_plots.pose_plot:main',
             'encoder = exp_plots.encoder_plot:main',
             'freq_odom = exp_plots.freq_odom_plot:main',
+            'pose_listener = exp_plots.pose_listener:main',
         ],
     },
 )

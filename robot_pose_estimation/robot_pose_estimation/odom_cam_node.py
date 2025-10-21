@@ -10,7 +10,7 @@ from sensor_msgs.msg import JointState
 from std_msgs.msg import Header
 
 
-class RobotPoseTracker(Node):
+class RobotPoseEstimation(Node):
     def __init__(self):
         super().__init__('odom_camera')
         pkg_dir = os.path.dirname(os.path.realpath(__file__))
@@ -159,14 +159,14 @@ class RobotPoseTracker(Node):
         scale = 0.6  # 60% do tamanho original, ajuste conforme desejar
         frame_small = cv2.resize(frame, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
 
-        cv2.imshow("Robot Tracking", frame_small)
+        cv2.imshow("Robot Pose Estimation", frame_small)
         cv2.waitKey(1)
 
         #print((self.get_clock().now()-now).to_msg())
 
 def main(args=None):
     rclpy.init(args=args)
-    node = RobotPoseTracker()
+    node = RobotPoseEstimation()
     rclpy.spin(node)
     node.destroy_node()
     cv2.destroyAllWindows()

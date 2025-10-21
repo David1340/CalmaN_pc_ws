@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Thresholds><Vermelho><Rmin>221</Rmin><Rmax>255</Rmax><Gmin>0</Gmin><Gmax>49</Gmax><Bmin>0</Bmin><Bmax>165</Bmax></Vermelho><Verde><Rmin>0</Rmin><Rmax>200</Rmax><Gmin>184</Gmin><Gmax>255</Gmax><Bmin>0</Bmin><Bmax>180</Bmax></Verde><Azul><Rmin>0</Rmin><Rmax>50</Rmax><Gmin>0</Gmin><Gmax>150</Gmax><Bmin>176</Bmin><Bmax>255</Bmax></Azul></Thresholds>

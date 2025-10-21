@@ -1,9 +1,11 @@
 import cv2
+import numpy as np
 import tkinter as tk
 from tkinter import filedialog, ttk
 from PIL import Image, ImageTk
 import xml.etree.ElementTree as ET
 import os
+import time
 
 
 class ColorThresholdApp:
@@ -13,6 +15,34 @@ class ColorThresholdApp:
 
         # Fonte de vídeo
         self.cap = cv2.VideoCapture(video_source)
+        # Define resolução
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
+        # Define foco manual (nem todas as câmeras suportam)
+        self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)   # 0 = manual, 1 = automático
+        self.cap.set(cv2.CAP_PROP_FOCUS, 0)       # valor em uma faixa dependente da câmera
+
+        # Define exposição manual
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)  # 1 = manual em algumas câmeras; 3 = automático (varia conforme driver)
+        self.cap.set(cv2.CAP_PROP_EXPOSURE, -8)
+
+        # Define contraste, saturação e brilho
+        self.cap.set(cv2.CAP_PROP_CONTRAST, 10)
+        self.cap.set(cv2.CAP_PROP_SATURATION, 200)
+        brilho = 40
+        print("Definindo brilho para:", brilho)
+
+        for _ in range(3):
+            self.cap.set(cv2.CAP_PROP_BRIGHTNESS, 100)
+            time.sleep(0.2)
+            self.cap.set(cv2.CAP_PROP_BRIGHTNESS, brilho)
+            time.sleep(0.2)
+        
+        #time.sleep(0.1)
+        #self.cap.set(cv2.CAP_PROP_BRIGHTNESS, brilho)
+        print("Brilho aplicado:", self.cap.get(cv2.CAP_PROP_BRIGHTNESS))
+        #self.frame_teste = cv2.imread(self.image_path)
 
         # Lista de cores
         self.colors = ["Vermelho", "Verde", "Azul"]
@@ -132,6 +162,10 @@ class ColorThresholdApp:
             upper = (rmax, gmax, bmax)
 
             mask = cv2.inRange(frame_rgb, lower, upper)
+            #Aplicar operações morfológicas
+            kernel = np.ones((5, 5), np.uint8)  # kernel para operações morfológicas
+            mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)   # remove ruído
+            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)  # preenche buracos
             result = cv2.bitwise_and(frame_rgb, frame_rgb, mask=mask)
 
             # Reduzir para exibição
@@ -169,5 +203,5 @@ class ColorThresholdApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = ColorThresholdApp(root, video_source=0, xml_file="thresholds.xml")
+    app = ColorThresholdApp(root, video_source=1, xml_file="thresholds.xml")
     root.mainloop()
