@@ -1,13 +1,14 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy
 import matplotlib.pyplot as plt
 import numpy as np
 
 class LidarPlotter(Node):
     def __init__(self):
         super().__init__('lidar_plotter')
-        self.create_subscription(LaserScan, '/robot/scan', self.lidar_callback, 2)
+        self.create_subscription(LaserScan, '/robot/scan', self.lidar_callback,QoSProfile(depth=10, reliability=QoSReliabilityPolicy.BEST_EFFORT))
         self.laser_scan_data = None
         self.get_logger().info('Plot do LIDAR iniciado')
 

@@ -13,9 +13,11 @@ class RobotPoseEstimation(Node):
         super().__init__('robot_pose_estimation')
         pkg_dir = os.path.dirname(os.path.realpath(__file__))
         self.thresholds_xml_path = os.path.join(pkg_dir, "test_data", "limiares.xml")
+        self.camera_config_xml_path = os.path.join(pkg_dir, "test_data", "camera_config.xml")
         # -- Parâmetros
         self.declare_parameter('camera_index', 1)
         self.declare_parameter('thresholds_xml', self.thresholds_xml_path)
+        self.declare_parameter('camera_config_xml', self.camera_config_xml_path)
         self.declare_parameter('escala', 1.30*100.0)  # pixel/m
 
         self.pose_pub = self.create_publisher(PoseStamped, '/pose_topic', 10)
@@ -24,39 +26,24 @@ class RobotPoseEstimation(Node):
         self.escala = self.get_parameter('escala').get_parameter_value().double_value
         self.camera_index = self.get_parameter('camera_index').get_parameter_value().integer_value
         self.thresholds_xml = self.get_parameter('thresholds_xml').get_parameter_value().string_value
+        self.camera_config_xml = self.get_parameter('camera_config_xml').get_parameter_value().string_value
         self.thresholds = self.load_thresholds(self.thresholds_xml)
 
+        # Sliders de propriedades
+        self.properties = {
+            "Brilho": (cv2.CAP_PROP_BRIGHTNESS, 0, 255, 60),
+            "Contraste": (cv2.CAP_PROP_CONTRAST, 0, 255, 50),
+            "Saturação": (cv2.CAP_PROP_SATURATION, 0, 255, 200),
+            "Exposição": (cv2.CAP_PROP_EXPOSURE, -10, 0, -2),
+            "Foco": (cv2.CAP_PROP_FOCUS, 0, 255, 0),
+        }
         # Inicializa vídeo
-        self.cap = cv2.VideoCapture(self.camera_index)
+        self.cap = cv2.VideoCapture(self.camera_index,cv2.CAP_DSHOW)
         if not self.cap.isOpened():
             self.get_logger().error(f"Nao foi possivel abrir camera {self.camera_index}")
             exit(1)
-
-        
-        # Define resolução
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-
-        # Define foco manual (nem todas as câmeras suportam)
-        self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)   # 0 = manual, 1 = automático
-        self.cap.set(cv2.CAP_PROP_FOCUS, 0)       # valor em uma faixa dependente da câmera
-
-        # Define exposição manual
-        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)  # 1 = manual em algumas câmeras; 3 = automático (varia conforme driver)
-        self.cap.set(cv2.CAP_PROP_EXPOSURE, -8)
-
-        # Define contraste, saturação e brilho
-        self.cap.set(cv2.CAP_PROP_CONTRAST, 10)
-        self.cap.set(cv2.CAP_PROP_SATURATION, 200)
-        brilho = 60
-        print("Definindo brilho para:", brilho)
-        self.cap.set(cv2.CAP_PROP_BRIGHTNESS, brilho)
-        time.sleep(0.1)
-        self.cap.set(cv2.CAP_PROP_BRIGHTNESS, 100)
-        time.sleep(0.1)
-        self.cap.set(cv2.CAP_PROP_BRIGHTNESS, brilho)
-        #self.frame_teste = cv2.imread(self.image_path)
-        print("Brilho aplicado:", self.cap.get(cv2.CAP_PROP_BRIGHTNESS))
+        # Carregar configurações da câmera
+        self.load_properties_from_xml(self.camera_config_xml)
 
 
         # Timer para processamento
@@ -71,6 +58,32 @@ class RobotPoseEstimation(Node):
             for child in color:
                 thresholds[color.tag][child.tag] = int(child.text)
         return thresholds
+    
+    def load_properties_from_xml(self, filepath):
+        # Define resolução
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)  # Desativa auto exposição
+        self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)  # Desativa auto foco
+        self.cap.set(cv2.CAP_PROP_FOCUS, 0)  # Define foco manual para 0
+        try:
+            tree = ET.parse(filepath)
+            root = tree.getroot()
+            for prop, (cap_id, min_val, max_val, default) in self.properties.items():
+                elem = root.find(prop)
+                if elem is not None:
+                    val = int(elem.text)
+                    self.cap.set(cap_id, val)
+                    time.sleep(0.1)  # aguarda aplicação
+                    self.cap.set(cap_id, default)
+                    time.sleep(0.1)
+                    self.cap.set(cap_id, val)
+                    self.get_logger().info(f"Propriedade {prop} carregada: {val}")
+                    self.get_logger().info(f"Propriedade {prop} valor: {self.cap.get(cap_id)}")
+
+        except Exception as e:
+            print("Erro ao carregar XML:", e)
+            
 
     def calc_centroid(self, mask):
         M = cv2.moments(mask)

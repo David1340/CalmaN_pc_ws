@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'pose_estimation = robot_pose_estimation.pose_estimation_node:main',
             'odom_cam = robot_pose_estimation.odom_cam_node:main',
+            'camera_config = robot_pose_estimation.camera_config:main',
         ],
     },
 )
