@@ -18,7 +18,7 @@ class RobotPoseEstimation(Node):
         self.declare_parameter('camera_index', 1)
         self.declare_parameter('thresholds_xml', self.thresholds_xml_path)
         self.declare_parameter('camera_config_xml', self.camera_config_xml_path)
-        self.declare_parameter('escala', 1.30*100.0)  # pixel/m
+        self.declare_parameter('escala', 2.15*100.0)  # pixel/m
 
         self.pose_pub = self.create_publisher(PoseStamped, '/pose_topic', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
@@ -38,7 +38,7 @@ class RobotPoseEstimation(Node):
             "Foco": (cv2.CAP_PROP_FOCUS, 0, 255, 0),
         }
         # Inicializa vídeo
-        self.cap = cv2.VideoCapture(self.camera_index,cv2.CAP_DSHOW)
+        self.cap = cv2.VideoCapture(self.camera_index)
         if not self.cap.isOpened():
             self.get_logger().error(f"Nao foi possivel abrir camera {self.camera_index}")
             exit(1)
@@ -119,6 +119,13 @@ class RobotPoseEstimation(Node):
 
         print(centroids)
         if centroids["Azul"] is None or centroids["Vermelho"] is None:
+            #self.load_properties_from_xml(self.camera_config_xml)
+            # --- Reduzir tamanho da imagem para exibição ---
+            scale = 0.6  # 60% do tamanho original, ajuste conforme desejar
+            frame_small = cv2.resize(frame, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+
+            cv2.imshow("Robot Pose Estimation", frame_small)
+            cv2.waitKey(1)
             return
 
         # Obter pose do robô
