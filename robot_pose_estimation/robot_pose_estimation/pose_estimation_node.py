@@ -3,10 +3,16 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from tf2_ros import TransformBroadcaster
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
 import numpy as np
 import xml.etree.ElementTree as ET
 import os
 import time
+
+# Importa o serviço
+import base64
+from example_interfaces.srv import Trigger
 
 class RobotPoseEstimation(Node):
     def __init__(self):
@@ -42,13 +48,47 @@ class RobotPoseEstimation(Node):
         if not self.cap.isOpened():
             self.get_logger().error(f"Nao foi possivel abrir camera {self.camera_index}")
             exit(1)
+
+        #self.frame_teste = cv2.imread(os.path.join(pkg_dir, "test_data", "01.jpg"))
         # Carregar configurações da câmera
         self.load_properties_from_xml(self.camera_config_xml)
+
+        # Faz a ponto para o openCV
+        self.bridge = CvBridge()
+        self.frame_rgb = None
+    
+        # Cria o serviço
+        self.srv = self.create_service(Trigger, 'get_map', self.get_map_callback)
 
 
         # Timer para processamento
         self.timer = self.create_timer(0.05, self.timer_callback)  # 20 Hz
 
+    def get_map_callback(self, request, response):
+        """Retorna o mapa como imagem codificada em base64 no Trigger.message"""
+        try:
+            t = self.thresholds["Verde"]
+            lower = (t["Rmin"], t["Gmin"], t["Bmin"])
+            upper = (t["Rmax"], t["Gmax"], t["Bmax"])
+            mask_green = cv2.inRange(self.frame_rgb, lower, upper)
+            kernel = np.ones((5,5), np.uint8)
+            mask_green = cv2.morphologyEx(mask_green, cv2.MORPH_OPEN, kernel)
+            mask_green = cv2.morphologyEx(mask_green, cv2.MORPH_CLOSE, kernel)
+
+            # converte para PNG bytes
+            _, buffer = cv2.imencode('.png', mask_green)
+            b64_str = base64.b64encode(buffer).decode('ascii')
+
+            response.success = True
+            response.message = b64_str
+            self.get_logger().info("Serviço get_map chamado, retornando mapa codificado")
+        except Exception as e:
+            response.success = False
+            response.message = f"Falha ao gerar mapa: {e}"
+            self.get_logger().warn(response.message)
+
+        return response
+    
     def load_thresholds(self, xml_path):
         tree = ET.parse(xml_path)
         root = tree.getroot()
@@ -101,7 +141,7 @@ class RobotPoseEstimation(Node):
             return
         #frame = self.frame_teste.copy()  # Usar imagem fixa para teste
 
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        self.frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         # Processa Azul e Vermelho (exemplo)
         #self.get_logger().info("Obtendo centroides...")
@@ -110,7 +150,7 @@ class RobotPoseEstimation(Node):
             t = self.thresholds[color]
             lower = (t["Rmin"], t["Gmin"], t["Bmin"])
             upper = (t["Rmax"], t["Gmax"], t["Bmax"])
-            mask = cv2.inRange(frame_rgb, lower, upper)
+            mask = cv2.inRange(self.frame_rgb, lower, upper)
             #Aplicar operações morfológicas
             kernel = np.ones((5, 5), np.uint8)  # kernel para operações morfológicas
             mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)   # remove ruído

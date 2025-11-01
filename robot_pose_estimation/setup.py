@@ -1,5 +1,6 @@
 from setuptools import find_packages, setup
 
+
 package_name = 'robot_pose_estimation'
 
 setup(
