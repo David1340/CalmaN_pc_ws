@@ -1,2 +1,2 @@
 <?xml version='1.0' encoding='utf-8'?>
-<Thresholds><Vermelho><Rmin>150</Rmin><Rmax>255</Rmax><Gmin>0</Gmin><Gmax>76</Gmax><Bmin>0</Bmin><Bmax>112</Bmax></Vermelho><Verde><Rmin>0</Rmin><Rmax>199</Rmax><Gmin>151</Gmin><Gmax>255</Gmax><Bmin>0</Bmin><Bmax>169</Bmax></Verde><Azul><Rmin>0</Rmin><Rmax>80</Rmax><Gmin>42</Gmin><Gmax>255</Gmax><Bmin>130</Bmin><Bmax>255</Bmax></Azul></Thresholds>
+<Thresholds><Vermelho><Rmin>243</Rmin><Rmax>255</Rmax><Gmin>0</Gmin><Gmax>76</Gmax><Bmin>0</Bmin><Bmax>112</Bmax></Vermelho><Verde><Rmin>0</Rmin><Rmax>185</Rmax><Gmin>183</Gmin><Gmax>255</Gmax><Bmin>0</Bmin><Bmax>114</Bmax></Verde><Azul><Rmin>0</Rmin><Rmax>80</Rmax><Gmin>42</Gmin><Gmax>255</Gmax><Bmin>233</Bmin><Bmax>255</Bmax></Azul></Thresholds>

@@ -52,7 +52,7 @@ class RobotPoseEstimation(Node):
             self.get_logger().error(f"Nao foi possivel abrir camera {self.camera_index}")
             exit(1)
 
-        self.frame_teste = cv2.imread(os.path.join(pkg_dir, "test_data", "01.jpg"))
+        #self.frame_teste = cv2.imread(os.path.join(pkg_dir, "test_data", "01.jpg"))
         # Carregar configurações da câmera
         self.load_properties_from_xml(self.camera_config_xml)
 
@@ -151,8 +151,10 @@ class RobotPoseEstimation(Node):
         ret, frame = self.cap.read()
         if not ret:
             self.get_logger().info("Fim do video")
+            self.cap = cv2.VideoCapture(self.camera_index)
+            self.load_properties_from_xml(self.camera_config_xml)
             return
-        frame = self.frame_teste.copy()  # Usar imagem fixa para teste
+        #frame = self.frame_teste.copy()  # Usar imagem fixa para teste
 
         self.frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
