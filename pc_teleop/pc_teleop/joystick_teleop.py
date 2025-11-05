@@ -36,7 +36,7 @@ class JoystickTeleop(Node):
 
         # Publica velocidades no formato Twist
         cmd = Twist()
-        vrmax = 25.2*0.5
+        vrmax = 25.2 * 2
         Vmax = vrmax*(0.03)
         Wmax = vrmax*(0.03/0.173)
         cmd.angular.z = -eixo_x*Wmax

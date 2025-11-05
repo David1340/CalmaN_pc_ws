@@ -26,8 +26,11 @@ class RobotPoseEstimation(Node):
         self.declare_parameter('camera_config_xml', self.camera_config_xml_path)
         self.declare_parameter('escala', 2.15*100.0)  # pixel/m
 
+        # Cria Publisher da Pose
         self.pose_pub = self.create_publisher(PoseStamped, '/pose_topic', 10)
         self.tf_broadcaster = TransformBroadcaster(self)
+        # Cria Publisher do Mapa -- Chamado só uma vez com o "service call"
+        self.map_pub = self.create_publisher(Image,'/map_topic',1)
 
         self.escala = self.get_parameter('escala').get_parameter_value().double_value
         self.camera_index = self.get_parameter('camera_index').get_parameter_value().integer_value
@@ -49,7 +52,7 @@ class RobotPoseEstimation(Node):
             self.get_logger().error(f"Nao foi possivel abrir camera {self.camera_index}")
             exit(1)
 
-        #self.frame_teste = cv2.imread(os.path.join(pkg_dir, "test_data", "01.jpg"))
+        self.frame_teste = cv2.imread(os.path.join(pkg_dir, "test_data", "01.jpg"))
         # Carregar configurações da câmera
         self.load_properties_from_xml(self.camera_config_xml)
 
@@ -75,12 +78,22 @@ class RobotPoseEstimation(Node):
             mask_green = cv2.morphologyEx(mask_green, cv2.MORPH_OPEN, kernel)
             mask_green = cv2.morphologyEx(mask_green, cv2.MORPH_CLOSE, kernel)
 
-            # converte para PNG bytes
-            _, buffer = cv2.imencode('.png', mask_green)
-            b64_str = base64.b64encode(buffer).decode('ascii')
+            # Cria a mensagem ROS Image
+            map_msg = Image()
+            map_msg.header.stamp = self.get_clock().now().to_msg()
+            map_msg.header.frame_id = "map"
+            map_msg.height = mask_green.shape[1]
+            map_msg.width = mask_green.shape[0]
+            map_msg.encoding = "mono8"
+            map_msg.is_bigendian = 0
+            map_msg.step = mask_green.shape[0]
+            map_msg.data = mask_green.flatten().tobytes()
+
+            # Publica a imagem processada
+            self.map_pub.publish(map_msg)
 
             response.success = True
-            response.message = b64_str
+            response.message = 'Mapa Enviado!'
             self.get_logger().info("Serviço get_map chamado, retornando mapa codificado")
         except Exception as e:
             response.success = False
@@ -139,7 +152,7 @@ class RobotPoseEstimation(Node):
         if not ret:
             self.get_logger().info("Fim do video")
             return
-        #frame = self.frame_teste.copy()  # Usar imagem fixa para teste
+        frame = self.frame_teste.copy()  # Usar imagem fixa para teste
 
         self.frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
